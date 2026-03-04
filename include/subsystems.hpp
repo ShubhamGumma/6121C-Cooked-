@@ -13,11 +13,13 @@ inline pros::Motor middleIntakeMotor(14); //middle intake motor
 inline pros::MotorGroup intake({-17,14}); //intake motor group
 
 inline ez::Piston lilRaaahh('F'); 
-inline ez::Piston descore('D'); 
+inline ez::Piston descore('A'); 
 inline ez::Piston middleGoalScore('C'); 
 inline ez::Piston middleGoalDescore('B');
 
 inline pros::Optical optical_sensor(8);
+
+inline pros::Distance frontDistance(6);
 
 inline pros::Task* antiJam = nullptr;
 

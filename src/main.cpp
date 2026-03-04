@@ -60,7 +60,7 @@ void initialize() {
 
   // Autonomous Selector using LLEMU
   ez::as::auton_selector.autons_add({
-      {"Drive\n\nDrive forward and come back", stateSkills},
+      {"Drive\n\nDrive forward and come back", finalSkills},
       {"Turn\n\nTurn 3 times.", turn_example},
       {"Drive and Turn\n\nDrive forward, turn, come back", drive_and_turn},
       {"Drive and Turn\n\nSlow down during drive", wait_until_change_speed},
@@ -249,6 +249,11 @@ void opcontrol() {
   chassis.drive_brake_set(MOTOR_BRAKE_COAST);
   //leftSideSkills();
   while (true) {
+    // printf("Distance: %d mm\n", frontDistance.get());
+    // pros::delay(20);
+    // double frontDist = (frontDistance.get())*0.0393701; //convert from mm to inches
+    // pros::lcd::print(0, "Distance: %f inches", frontDist);
+
     // Gives you some extras to make EZ-Template ezier
     //ez_template_extras();
 
@@ -291,10 +296,9 @@ void opcontrol() {
     //   // //std::cout << chassis.odom_theta_get() << std::endl;
     //   // pros::lcd::print(0,"Heading: %f" ,chassis.odom_theta_get());
 
-    //   chassis.odom_xyt_set(0,0,0);
-    //   chassis.pid_odom_set(24,110);
-    //   chassis.pid_wait();
-    //   pros::lcd::print(0, "Distance:", chassis.odom_x_get());
+    //   //frontDistance.reset(); //reset distance sensor to 0
+    //   double frontDist = (frontDistance.get())*0.0393701; //convert from mm to inches
+    //   pros::lcd::print(0, "Distance: %f inches", frontDist);
 
     // }
     else if (master.get_digital(DIGITAL_R1)) {

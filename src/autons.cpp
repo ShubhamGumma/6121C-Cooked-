@@ -17,9 +17,9 @@ const int BALLGOAL_SPEED = 50;
 ///
 void default_constants() {
   // P, I, D, and Start I //26,330
-  chassis.pid_drive_constants_set(26,0,245);     // Fwd/rev constants, used for odom and non odom motions - 26,0,245 old bot and 25,0,260 and 18,0,125
-  chassis.pid_heading_constants_set(11,0,20); //ds the robot straight while going forward without odom - 11,0,20
-  chassis.pid_turn_constants_set(2.5, 0, 14);     // Turn in place constants - 2.5,0,16.5 old bot
+  chassis.pid_drive_constants_set(9,0,31.5);     // Fwd/rev constants, used for odom and non odom motions - 26,0,245 old bot and 25,0,260 and 18,0,125
+  chassis.pid_heading_constants_set(2.5,0,16.5); //ds the robot straight while going forward without odom - 11,0,20
+  chassis.pid_turn_constants_set(2.5, 0, 16.5);     // Turn in place constants - 2.5,0,16.5 old bot
   chassis.pid_swing_constants_set(6.0, 0.0, 65.0);           // Swing constants
   chassis.pid_odom_angular_constants_set(6.5, 0.0, 52.5);    // Angular control for odom motions
   chassis.pid_odom_boomerang_constants_set(5.8, 0.0, 32.5);  // Angular control for boomerang motions
@@ -48,6 +48,396 @@ void default_constants() {
   chassis.odom_boomerang_dlead_set(0.625);     // This handles how aggressive the end of boomerang motions are
 
   chassis.pid_angle_behavior_set(ez::shortest);  // Changes the default behavior for turning, this defaults it to the shortest path there
+}
+
+void finalSkills(){
+  chassis.drive_angle_set(0_deg); //face forward
+  chassis.pid_wait();
+  descore.set(true); //make sure descore is retracted at beginning of match
+  middleIntakeMotor.move(127); //bottom stage intake spins 
+  topIntakeMotor.move(-100); //top stage intake spins passive back 
+  chassis.pid_turn_set(332_deg,TURN_SPEED); //turn towards matchloader 335
+  chassis.pid_wait();
+  chassis.pid_drive_set(26_in, DRIVE_SPEED+5); //drive 32 inches toward 3 cluster of balls at drive_speed+5
+  chassis.pid_wait_until(13_in); //after 14 inches switch to ballgoalspeed
+  lilRaaahh.set(true); //deploy matchloader mechanism to pick up balls
+
+  //chassis.pid_speed_max_set(BALLGOAL_SPEED-20);
+  chassis.pid_wait_quick_chain();
+  lilRaaahh.set(true); //deploy matchloader mechanism to pick up balls
+  chassis.pid_turn_set(238_deg,TURN_SPEED); //turn 226 deg with back of robot facing middle goal
+  chassis.pid_wait_quick();
+  topIntakeMotor.move(-127); //pasive top stage intake to prevent jamming
+  middleIntakeMotor.move(-15); //outake intake
+
+  chassis.pid_drive_set(-15_in,DRIVE_SPEED); //drive backwards into goal by 15 inches
+  chassis.pid_wait_until(-11_in); //wait until -2 inches 
+  middleGoalScore.set(true); //deploy middle goal scoring piston 
+  //chassis.pid_wait();
+  pros::delay(200); //delay for piston to deploy before outtaking balls
+
+  middleIntakeMotor.move(100);  //socre on mid goal 100
+  topIntakeMotor.move(-60); //run top stage intake forward at reduced speed initally out
+  chassis.pid_turn_set(226_deg,TURN_SPEED); //turn towards matchloader 335
+  pros::delay(300);
+  chassis.pid_drive_set(-2_in, 40); //drive 15 inches toward 3 cluster of balls at drive_speed
+  pros::delay(700); //time for middle goal scoring - 1600 ms 
+  middleGoalScore.set(false); //retract middle goal scoring piston 
+  //intake.move(127); // get rid of extra balls in the intake 
+  chassis.pid_drive_set(52.5_in, DRIVE_SPEED-5-5); //drive 54 inches towards field perimeter wall
+  chassis.pid_wait();
+  lilRaaahh.set(true); //deploy matchloader mechanism
+  chassis.pid_turn_set(180_deg, TURN_SPEED); //face towards matchloader 
+  chassis.pid_wait();
+
+
+  middleIntakeMotor.move(127); //running the bottom intake stage to matchload
+  topIntakeMotor.move(-30); //pasive top stage intake to prevent jamming
+  chassis.pid_drive_set(19_in, DRIVE_SPEED+10); //drive in by 19 incehs into matchloader 
+  chassis.pid_wait_until(2_in); //wait for 2 inches before switching to ballgoal speed -5
+  chassis.pid_speed_max_set(BALLGOAL_SPEED-5); 
+  chassis.pid_wait();
+  middleGoalDescore.set(true); //deploy middle goal descore piston to descore the middle goal if needed
+  chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
+  chassis.pid_wait();
+  chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
+  chassis.pid_wait();
+
+  pros::delay(700); //time for matchloading 
+  middleGoalDescore.set(false); //retract middle goal descore piston
+  chassis.pid_drive_set(-17_in, DRIVE_SPEED+10); //backward to goal 17 inches
+  chassis.pid_wait();
+  lilRaaahh.set(false); //matchloader retract
+
+  // //turning to other side/going to other side
+  chassis.pid_turn_set(120_deg,TURN_SPEED+10); //300 deg to perimeter wall 300 before 
+  // pros::delay(1000); //1000
+  chassis.pid_wait_until(130_deg); //wait until 140 deg before switching to drive speed +10
+  pros::delay(100);
+  intake.move(0); //intake stop spinning
+  chassis.pid_drive_set(-15.5_in, DRIVE_SPEED+10); //16 in towards perimeter wall 14 before 
+  chassis.pid_wait_quick();
+  chassis.pid_turn_set(182_deg,TURN_SPEED+10); //turn towards other side matchload/perimeter 0 deg before 
+  //pros::delay(300);
+  chassis.pid_wait_quick();
+  chassis.pid_drive_set(-71_in,DRIVE_SPEED-5); //go towards other side 65 in 64 -10-5-5
+  chassis.pid_wait();
+
+  // //next quadrant
+  // chassis.pid_turn_set(53_deg,TURN_SPEED+10); //turn 50 deg to start alinging with long goal
+  // chassis.pid_wait_quick_chain();
+  // chassis.pid_drive_set(15.5_in,DRIVE_SPEED+10); //17 inches diagonal movement to long goal 15.5
+  // // pros::delay(650);
+  // chassis.pid_wait();  
+  // chassis.pid_turn_set(0_deg,TURN_SPEED+10); //turn towards matchload with bot facing forwards 0 deg
+  // // chassis.pid_wait_quick_chain(); 
+  // pros::delay(300);
+  // chassis.pid_drive_set(-17_in,DRIVE_SPEED+10); //backward to long goal by 15
+  // // chassis.pid_wait();
+  // pros::delay(400);
+
+  chassis.pid_turn_set(270_deg,TURN_SPEED+10); //turn 50 deg to start alinging with long goal
+  chassis.pid_wait_quick();
+  chassis.pid_drive_set(-11_in, DRIVE_SPEED); //drive to collect balls fallen balls  -40 ((frontDistance.get())*0.0393701) -29.5
+  chassis.pid_wait_quick();
+  chassis.pid_turn_set(0_deg,TURN_SPEED+10); //turn towards matchload with bot facing forwards 0 deg
+  chassis.pid_wait_quick();
+  chassis.pid_drive_set(-13_in,DRIVE_SPEED+10); //backward to long goal by 15
+  chassis.pid_wait_until(-10_in); //wait until -10 inches before stopping
+  middleIntakeMotor.move(127); //intaking at goals with bottom stage
+  topIntakeMotor.move(127); //top stage intake spins passive back to prevent jamming
+  pros::delay(150);
+
+  //intake.move(127); //intaking at goals
+
+  chassis.pid_turn_set(0_deg,TURN_SPEED); //turn towards long goal 180
+
+  //middleIntakeMotor.move(110); //bottom stage intake spins
+  //topIntakeMotor.move(110); //top stage intake spins passive back to prevent j
+  pros::delay(1950); //delay for scoring at long goal 
+  intake.move(0);
+  lilRaaahh.set(true); //matchload mech deploy 
+  middleIntakeMotor.move(127); //first stage intake spin
+  topIntakeMotor.move(-15);
+  pros::delay(100);
+  chassis.pid_drive_set(39_in,DRIVE_SPEED); //forward 43
+  chassis.pid_wait_until(12_in); //at 12 inches switch to ballgoalspeed+10
+  chassis.pid_speed_max_set(BALLGOAL_SPEED+5-5);
+  chassis.pid_wait();
+  chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
+  chassis.pid_wait();
+  chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
+  chassis.pid_wait();
+  pros::delay(600); //delay for intaking at matchload 600 ms
+  intake.move(-5); //moving intake backward to prevent jamming
+  chassis.pid_drive_set(-31_in,DRIVE_SPEED+10); //backwards 33 
+  chassis.pid_wait();
+  //intake.move(100); //intake forward to score
+  middleIntakeMotor.move(127); //bottom stage intake spins to score
+  topIntakeMotor.move(127); //pasive top stage intake to prevent jamming
+  //middleIntakeMotor.move(110);
+  //topIntakeMotor.move(80);
+  pros::delay(2200); //delay for scoring at long goal
+  chassis.pid_drive_set(4_in,127);//back forth goals for control 4 out 
+  chassis.pid_wait();
+  chassis.pid_drive_set(-5_in, 20); //back forth goals for control 5 in
+  chassis.pid_wait();
+  lilRaaahh.set(false); //retract matchloader mechanism
+
+  middleIntakeMotor.move(127); //bottom stage intake spins
+  topIntakeMotor.move(-20); //top stage intake spins passive back
+  chassis.pid_drive_set(21_in,DRIVE_SPEED); //21
+  chassis.pid_wait();
+  chassis.pid_turn_set(65_deg, TURN_SPEED); //40
+  chassis.pid_wait();
+  chassis.pid_drive_set(30_in,DRIVE_SPEED); //33 +10 and 42
+  chassis.pid_wait();
+  chassis.pid_swing_set(ez::LEFT_SWING, 85_deg, 120); //265 or 80
+  chassis.pid_wait();
+  chassis.pid_drive_set(60_in, 65); //drive forward 60 inches into the parking zone
+  chassis.pid_wait();
+  chassis.pid_turn_set(90_deg, TURN_SPEED); //turn towards field perimeter wall
+  chassis.pid_wait();
+  chassis.pid_drive_set(((frontDistance.get())*0.0393701) -29.5, DRIVE_SPEED); //drive to collect balls fallen balls  -40
+  chassis.pid_wait();
+  chassis.pid_turn_set(50_deg, TURN_SPEED); //220
+  chassis.pid_wait();
+  chassis.pid_drive_set(-46_in, DRIVE_SPEED); //drive back 20 inches to be fully in the parking zone
+  chassis.pid_wait();
+  chassis.pid_turn_set(315_deg, TURN_SPEED); //220
+  chassis.pid_wait();
+  chassis.pid_drive_set(-20_in, DRIVE_SPEED); //drive back 20 inches to be fully in the parking zone
+  chassis.pid_wait();
+  chassis.pid_turn_set(45_deg, TURN_SPEED); //220
+  chassis.pid_wait();
+  topIntakeMotor.move(-127); //top stage intake spins passive back to score
+  middleIntakeMotor.move(-25); //bottom stage intake spins to pick up fallen balls
+  //lilRaaahh.set(true); //deploy matchloader mechanism to pick up balls
+
+  //intake.move(-30); //intake spins to pick up fallen balls
+  chassis.pid_drive_set(-9_in, DRIVE_SPEED-20); //drive back 20 inches to be fully in the parking zone
+  chassis.pid_wait_until(-8_in); //wait until -10 inches before stopping
+  middleGoalScore.set(true); //deploy middle goal scoring piston
+
+  chassis.pid_wait();
+  //middleGoalScore.set(true);
+  middleIntakeMotor.move(90); //bottom stage intake spins to score
+  topIntakeMotor.move(0); //top stage intake spins passive back to score
+  chassis.pid_drive_set(-15_in,50); //towards goal 30 inches
+  //chassis.pid_wait();
+  pros::delay(500); //3500
+  chassis.pid_drive_set(0.5_in,50); //towards goal 30 inches
+  pros::delay(500); //3500
+  middleIntakeMotor.move(90); //bottom stage intake spins to pick up fallen balls
+  pros::delay(1800); //time for intaking fallen balls
+  middleIntakeMotor.move(65); //bottom stage intake spins to pick up fallen balls
+  chassis.pid_drive_set(-2_in, BALLGOAL_SPEED); //drive back 20 inches to be fully in the parking zone
+  //chassis.pid_drive_set(1_in,50); //towards goal 30 inches
+  //chassis.pid_wait();
+  // pros::delay(1000); //3500
+  // chassis.pid_drive_set(-1_in,50); //towards goal 30 inches
+  // chassis.pid_wait();
+  // pros::delay(1000); //3500
+  // chassis.pid_drive_set(6_in,20); //towards goal 30 inches
+
+  // chassis.pid_drive_set(54_in,DRIVE_SPEED+5+5); //move toward field perimeter by 53 inches 
+  // chassis.pid_wait();
+  // middleGoalScore.set(false);
+
+  chassis.pid_drive_set(54_in, 20); //30
+  chassis.pid_wait_until(6_in); //at 15 inches switch to ballgoalspeed
+  chassis.pid_speed_max_set(DRIVE_SPEED+5+5);
+  chassis.pid_wait_until(30_in); //wait until 30 inches to start slowing down
+  lilRaaahh.set(true); //deploy matchloader mechanism to pick up balls
+  middleGoalScore.set(false);
+
+  chassis.pid_wait();
+
+  intake.move(0);
+  middleIntakeMotor.move(127);
+  //lilRaaahh.set(true);
+
+  chassis.pid_turn_set(0_deg, TURN_SPEED+10); //face the matchloader 
+  chassis.pid_wait();
+  pros::delay(100);
+  // lilRaaahh.set(true);
+  middleIntakeMotor.move(127); //run bottom intake motor to intake the 3 balls
+  topIntakeMotor.move(-15);
+  //topIntakeMotor.move(0); //stop top intake motor
+  chassis.pid_drive_set(29_in, BALLGOAL_SPEED); //30
+  chassis.pid_wait_until(5_in); //at 15 inches switch to ballgoalspeed
+  chassis.pid_speed_max_set(BALLGOAL_SPEED+5-5-5);
+  chassis.pid_wait();
+  chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
+  chassis.pid_wait();
+  chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
+  chassis.pid_wait();
+  pros::delay(600);
+
+  chassis.pid_drive_set(-15_in, DRIVE_SPEED+10); //backward to goal 15 inches
+  chassis.pid_wait();
+  lilRaaahh.set(false); //matchloader retract
+  chassis.pid_turn_set(135_deg,TURN_SPEED); // 135 deg to perimeter wall
+  chassis.pid_wait();
+  intake.move(0); //intake stop spinning
+
+  chassis.pid_drive_set(17_in,DRIVE_SPEED+5); //22 in towards perimeter wall
+  chassis.pid_wait();
+  chassis.pid_turn_set(180_deg,TURN_SPEED); //turn towards other side matchload/perimeter 180 deg
+  chassis.pid_wait();
+  chassis.pid_drive_set(54_in,DRIVE_SPEED-5); //go towards other side 65 in 60 -10-5
+  chassis.pid_wait();
+  chassis.pid_turn_set(230_deg,TURN_SPEED+10); //turn 130 before now 230 deg to start alinging with long goal
+  chassis.pid_wait();
+  chassis.pid_drive_set(18_in,DRIVE_SPEED+5); //16 inches diagonal movement to long goal
+  chassis.pid_wait();
+  middleIntakeMotor.move(-10);
+  chassis.pid_turn_set(180_deg,TURN_SPEED); //turn towards matchload with bot facing forwards 180 deg
+  chassis.pid_wait();
+  chassis.pid_drive_set(-16_in,DRIVE_SPEED+5); //backward to long goal by 22 in skillsCut
+  // chassis.pid_wait();
+  pros::delay(300);
+  intake.move(127); //intaking at goals
+  pros::delay(1900); //delay for scoring at long goal 
+  intake.move(0);
+
+  lilRaaahh.set(true); //matchload mech deploy 
+  middleIntakeMotor.move(127); //first stage intake spin
+  topIntakeMotor.move(-30);
+  pros::delay(100);
+  chassis.pid_drive_set(41_in,DRIVE_SPEED); //forward 47 in skillsCut towards matchloader 
+  chassis.pid_wait_until(15_in); //at 15 inches switch to ballgoalspeed
+  chassis.pid_speed_max_set(BALLGOAL_SPEED+5-5); //+2
+  chassis.pid_wait();
+  chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
+  chassis.pid_wait();
+  chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
+  chassis.pid_wait();
+  pros::delay(450); //delay for intaking at matchload 450 ms
+
+  //intake.move(-10); //moving intake backward to prevent jamming
+  chassis.pid_drive_set(-32_in,DRIVE_SPEED+5+5); //backwards 33 before in skillsCut/now 37 to long goal 
+  pros::delay(500);
+  middleIntakeMotor.move(-10);
+  // // middleIntakeMotor.move(127); //controlled intake scoring so balls dont bounce out
+  // // topIntakeMotor.move(100);
+  //intake.move(127);
+  middleIntakeMotor.move(127);
+  topIntakeMotor.move(127);
+  pros::delay(2200); //delay for scoring at long goal
+  chassis.pid_drive_set(4_in,127); //back forth goals for control 4 out 
+  pros::delay(450);
+  chassis.pid_drive_set(-5_in, 80); //back forth goals for control 5 in
+  pros::delay(450);
+  // chassis.pid_drive_set(4_in,DRIVE_SPEED); //back forth goals for control 4 out 
+  // chassis.pid_wait();
+  // chassis.pid_drive_set(-5_in, 30); //back forth goals for control 5 in
+  // chassis.pid_wait();
+  middleIntakeMotor.move(0); //stop intake stages 
+  topIntakeMotor.move(0);
+  lilRaaahh.set(false); //retract matchloader mech
+
+  //new park
+
+  chassis.drive_angle_set(180_deg);
+  chassis.pid_wait();
+  chassis.pid_drive_set(7_in,DRIVE_SPEED+10); //7
+  chassis.pid_wait_quick_chain();
+  chassis.pid_turn_set(235_deg, TURN_SPEED); //228
+  chassis.pid_wait_quick_chain();
+  chassis.pid_drive_set(37_in,DRIVE_SPEED+10); //33 +10 and 42
+  //chassis.pid_wait();
+  pros::delay(1100);
+  middleIntakeMotor.move(127);
+  chassis.pid_swing_set(ez::LEFT_SWING, 265_deg, 120); //265
+  //chassis.pid_wait();
+  pros::delay(600);
+  // chassis.pid_drive_set(35_in, 125); //125 and 35
+  // chassis.pid_wait();
+  chassis.pid_drive_set(29_in, 70 ); //125 and 28
+  chassis.pid_wait_quick_chain();
+  chassis.pid_drive_set(-4_in, 85); //125 and 35
+  chassis.pid_wait_quick_chain();
+}
+
+void newMiddle(){
+  middleIntakeMotor.move(127); //bottom stage intake spins
+  topIntakeMotor.move(-20); //top stage intake spins passive back
+  chassis.pid_drive_set(21_in,DRIVE_SPEED); //21
+  chassis.pid_wait();
+  chassis.pid_turn_set(65_deg, TURN_SPEED); //40
+  chassis.pid_wait();
+  chassis.pid_drive_set(30_in,DRIVE_SPEED); //33 +10 and 42
+  chassis.pid_wait();
+  chassis.pid_swing_set(ez::LEFT_SWING, 85_deg, 120); //265 or 80
+  chassis.pid_wait();
+  chassis.pid_drive_set(60_in, 65); //drive forward 60 inches into the parking zone
+  chassis.pid_wait();
+  chassis.pid_turn_set(90_deg, TURN_SPEED); //turn towards field perimeter wall
+  chassis.pid_wait();
+  chassis.pid_drive_set(((frontDistance.get())*0.0393701) -31, DRIVE_SPEED); //drive to collect balls fallen balls  -40
+  chassis.pid_wait();
+  chassis.pid_turn_set(50_deg, TURN_SPEED); //220
+  chassis.pid_wait();
+  chassis.pid_drive_set(-46_in, DRIVE_SPEED); //drive back 20 inches to be fully in the parking zone
+  chassis.pid_wait();
+  chassis.pid_turn_set(315_deg, TURN_SPEED); //220
+  chassis.pid_wait();
+  chassis.pid_drive_set(-22_in, DRIVE_SPEED); //drive back 20 inches to be fully in the parking zone
+  chassis.pid_wait();
+  chassis.pid_turn_set(45_deg, TURN_SPEED); //220
+  chassis.pid_wait();
+  topIntakeMotor.move(-127); //top stage intake spins passive back to score
+  middleIntakeMotor.move(-25); //bottom stage intake spins to pick up fallen balls
+  //lilRaaahh.set(true); //deploy matchloader mechanism to pick up balls
+
+  //intake.move(-30); //intake spins to pick up fallen balls
+  chassis.pid_drive_set(-9_in, DRIVE_SPEED-20); //drive back 20 inches to be fully in the parking zone
+  chassis.pid_wait_until(-8_in); //wait until -10 inches before stopping
+  middleGoalScore.set(true); //deploy middle goal scoring piston
+
+  chassis.pid_wait();
+  //middleGoalScore.set(true);
+  middleIntakeMotor.move(90); //bottom stage intake spins to score
+  topIntakeMotor.move(0); //top stage intake spins passive back to score
+  chassis.pid_drive_set(-15_in,50); //towards goal 30 inches
+  //chassis.pid_wait();
+  pros::delay(500); //3500
+  chassis.pid_drive_set(0.5_in,50); //towards goal 30 inches
+  pros::delay(500); //3500
+  middleIntakeMotor.move(90); //bottom stage intake spins to pick up fallen balls
+  pros::delay(1800); //time for intaking fallen balls
+  middleIntakeMotor.move(70); //bottom stage intake spins to pick up fallen balls
+  chassis.pid_drive_set(-2_in, BALLGOAL_SPEED); //drive back 20 inches to be fully in the parking zone
+  //chassis.pid_drive_set(1_in,50); //towards goal 30 inches
+  //chassis.pid_wait();
+  // pros::delay(1000); //3500
+  // chassis.pid_drive_set(-1_in,50); //towards goal 30 inches
+  // chassis.pid_wait();
+  // pros::delay(1000); //3500
+  chassis.pid_drive_set(6_in,20); //towards goal 30 inches
+
+  // middleIntakeMotor.move(127);
+  // topIntakeMotor.move(-10);
+  // chassis.pid_drive_set(45_in, DRIVE_SPEED); //32
+  // chassis.pid_wait();
+  // middleIntakeMotor.move(-20);
+  // topIntakeMotor.move(-127);
+  // chassis.pid_turn_set(45_deg, TURN_SPEED); //220
+  // chassis.pid_wait();
+  // lilRaaahh.set(true);
+  // //intake.move(-40);
+  // chassis.pid_drive_set(-17_in, DRIVE_SPEED); //drive back 23
+  // chassis.pid_wait_until(-15_in);
+  // chassis.pid_speed_max_set(BALLGOAL_SPEED-20);
+  // middleGoalScore.set(true);
+  // chassis.pid_wait();
+  // middleIntakeMotor.move(110); //85 bottom 
+  // topIntakeMotor.move(-127); //-70 top 
+  // chassis.pid_drive_set(-20_in,50); //towards goal 30 inches
+  // chassis.pid_wait();
+  // pros::delay(3000); //3500
+  // lilRaaahh.set(false);
 }
 
 void matchload(int matchloadNumber){
@@ -294,11 +684,48 @@ void calibrateBlue(int matchloaderNumber){
 
 // }
 
+void fourCamp(){
+  chassis.drive_angle_set(-24.5_deg); //robot faces three cluster balls at 26 deg
+  chassis.pid_wait();
+  middleIntakeMotor.move(127); //bottom stage intake spins 
+  chassis.pid_drive_set(31_in, DRIVE_SPEED+5); //drive 33 inches toward 3 cluster of balls at drive_speed-5
+  chassis.pid_wait_until(15_in); //after 15 inches switch to ballgoalspeed-20
+  chassis.pid_speed_max_set(BALLGOAL_SPEED-20);
+  lilRaaahh.set(true); //deploy matchload mech once at cluster of balls
+  chassis.pid_wait();
+  pros::delay(100); //wait 300 ms to intake the balls
+  chassis.pid_turn_set(226_deg,TURN_SPEED); //turn 226 deg with back of robot facing middle goal
+  chassis.pid_wait();
+  middleIntakeMotor.move(-35); //middleInatkMotor and 20
+
+  chassis.pid_drive_set(-19_in,DRIVE_SPEED); //drive backwards into goal by 19 inches
+  chassis.pid_wait_until(2_in); //wait until 4 inches away from target to switch to ballgoal speed
+  middleGoalScore.set(true); //deploy middle goal scoring piston
+  chassis.pid_wait();
+
+  //middleGoalScore.set(true); //deploy middle goal scoring piston 
+  middleIntakeMotor.move(105);  //110
+  topIntakeMotor.move(-60);
+  pros::delay(1550); //time for middle goal scoring - 1560 for 3 balls and 1610 for 4 balls 
+  chassis.pid_drive_set(2_in,DRIVE_SPEED); //drive forward 5 inches to unjam balls from goal
+  chassis.pid_wait();
+  chassis.pid_drive_set(-4_in,DRIVE_SPEED); //drive back 5 inches into goal again
+  chassis.pid_wait();
+  middleGoalScore.set(false); //retract middle goal scoring piston 
+  intake.move(0); //stop spinning the intake 
+
+  chassis.pid_drive_set(14_in,DRIVE_SPEED); //12
+  chassis.pid_wait();
+  middleGoalDescore.set(true);
+  chassis.pid_drive_set(-11_in,BALLGOAL_SPEED); //12
+  chassis.pid_wait();
+}
+
 void leftSevenBallWing(){
   chassis.drive_angle_set(-26_deg); //was 26
   chassis.pid_wait();
   middleIntakeMotor.move(127);
-  topIntakeMotor.move(-15);
+  topIntakeMotor.move(-25);
   chassis.pid_drive_set(32_in, DRIVE_SPEED+5);
   chassis.pid_wait_until(15_in);
   chassis.pid_speed_max_set(BALLGOAL_SPEED-20);
@@ -309,7 +736,7 @@ void leftSevenBallWing(){
 
   chassis.pid_turn_set(228_deg, TURN_SPEED);   
   chassis.pid_wait();
-  chassis.pid_drive_set(33.5_in,DRIVE_SPEED); //32.5 non issam  and ballgoal + 10
+  chassis.pid_drive_set(32.5_in,DRIVE_SPEED); //32.5 non issam  and ballgoal + 10
   chassis.pid_wait();
   chassis.pid_turn_set(180_deg, TURN_SPEED);
   chassis.pid_wait();
@@ -322,7 +749,7 @@ void leftSevenBallWing(){
   chassis.pid_wait_until(5_in);
   chassis.pid_speed_max_set(BALLGOAL_SPEED-10);
   // chassis.pid_wait();
-  pros::delay(990); //110
+  pros::delay(960); //110
   intake.move(5); //-20
 
   chassis.pid_drive_set(-31_in,DRIVE_SPEED); //-33 regular not issaam
@@ -330,11 +757,12 @@ void leftSevenBallWing(){
   intake.move(127);
   pros::delay(2000);
   intake.move(0);
+  lilRaaahh.set(false);
   chassis.pid_drive_set(8_in,DRIVE_SPEED); 
   chassis.pid_wait();
   chassis.pid_turn_set(115_deg,TURN_SPEED); //65
   chassis.pid_wait();
-  chassis.pid_drive_set(13.5_in,DRIVE_SPEED); 
+  chassis.pid_drive_set(12.5_in,DRIVE_SPEED); 
   chassis.pid_wait();
   chassis.pid_turn_set(180_deg,TURN_SPEED); //225
   chassis.pid_wait();
@@ -399,24 +827,24 @@ void threePlusFour(){
   pros::delay(100); //wait 300 ms to intake the balls
   chassis.pid_turn_set(226_deg,TURN_SPEED); //turn 226 deg with back of robot facing middle goal
   chassis.pid_wait();
-  middleIntakeMotor.move(-35); //middleInatkMotor and 20
+  intake.move(-20); //middleInatkMotor and 20
 
-  chassis.pid_drive_set(-19_in,DRIVE_SPEED); //drive backwards into goal by 18 inches
+  chassis.pid_drive_set(-20_in,DRIVE_SPEED); //drive backwards into goal by 18 inches
   chassis.pid_wait_until(2_in); //wait until 4 inches away from target to switch to ballgoal speed
   middleGoalScore.set(true); //deploy middle goal scoring piston
   chassis.pid_wait();
 
   //middleGoalScore.set(true); //deploy middle goal scoring piston 
-  middleIntakeMotor.move(105);  //110
+  middleIntakeMotor.move(90);  //110
   topIntakeMotor.move(-60);
-  pros::delay(1515); //time for middle goal scoring - 1560 for 3 balls and 1610 for 4 balls 
+  pros::delay(1600); //time for middle goal scoring - 1560 for 3 balls and 1610 for 4 balls 
   chassis.pid_drive_set(2_in,DRIVE_SPEED); //drive forward 5 inches to unjam balls from goal
   chassis.pid_wait();
   chassis.pid_drive_set(-3_in,DRIVE_SPEED); //drive back 5 inches into goal again
   chassis.pid_wait();
   middleGoalScore.set(false); //retract middle goal scoring piston 
   intake.move(0); //stop spinning the intake 
-  chassis.pid_drive_set(56_in, DRIVE_SPEED-5); //drive 55 inches towards field perimeter wall
+  chassis.pid_drive_set(56.5_in, DRIVE_SPEED-5); //drive 55 inches towards field perimeter wall
   chassis.pid_wait();
   chassis.pid_turn_set(180_deg, TURN_SPEED); //face towards matchloader 
   chassis.pid_wait();
@@ -428,14 +856,14 @@ void threePlusFour(){
   chassis.pid_wait_until(2_in); //wait for 4 inches before switching to ballgoal speed 
   chassis.pid_speed_max_set(BALLGOAL_SPEED-5); 
   // chassis.pid_wait();
-  pros::delay(950); //140 ms delay for matchloading 3 balls  15 ms 
+  pros::delay(940); //140 ms delay for matchloading 3 balls  15 ms 
 
   chassis.pid_drive_set(-32_in,DRIVE_SPEED-10); //drive back into long goal by 34 in
   //lilRaaahh.set(false); //retract matchloader mechanism
   middleIntakeMotor.move(30); //slightly run bottom stage back for jamming
   chassis.pid_wait();
   intake.move(127); //run full intake to score on the long goal
-  pros::delay(1220); //1350 ms delay for long goal scoring //1350
+  pros::delay(1245); //1350 ms delay for long goal scoring //1350
   intake.move(0); //stop the intake from spinning 
   descore.set(false); //disable descore so it comes down 
   lilRaaahh.set(false); //disengage matchload mechanism
@@ -616,7 +1044,7 @@ void leftFourBallWing(){
   chassis.pid_drive_set(-12_in,DRIVE_SPEED); //drive back into the matchloader by 15 inches
   pros::delay(500);
   intake.move(127); //start intake
-  pros::delay(1300); //score the 4 balls 
+  pros::delay(1350); //score the 4 balls 
 
   chassis.pid_drive_set(8_in,DRIVE_SPEED+20);  //drive 8 inches forward 
   pros::delay(700);
@@ -630,6 +1058,7 @@ void leftFourBallWing(){
   chassis.pid_wait();
   chassis.pid_drive_set(-10_in,40); //keep driving back 
   chassis.pid_wait();
+  lilRaaahh.set(false); //retract lil will
 
 }
 
@@ -1131,7 +1560,7 @@ void fourSAWP(){
 void optimizedSAWP(){
   chassis.drive_angle_set(90_deg); //start off facing 90 deg
   chassis.pid_wait();
-  chassis.pid_drive_set(33.5_in,DRIVE_SPEED+5); //go towards goal 33 inches
+  chassis.pid_drive_set(34.5_in,DRIVE_SPEED+5); //go towards goal 33 inches
   chassis.pid_wait();
   lilRaaahh.set(true); //deploy matchloader mechanism
   chassis.pid_turn_set(180_deg,TURN_SPEED); //turn towards matchloader 
@@ -1150,7 +1579,7 @@ void optimizedSAWP(){
   pros::delay(950); //short delay before running intake //1090
   intake.move(127); //run full intake to score 3 balls
   lilRaaahh.set(false); //retract matchloader mechanism
-  pros::delay(1000); //run intake for 650 ms to score balls
+  pros::delay(1050); //run intake for 650 ms to score balls
   chassis.drive_angle_set(180_deg);
   // chassis.drive_angle_set(180_deg); //start off facing 90 deg
   // chassis.pid_wait();
@@ -1165,7 +1594,7 @@ void optimizedSAWP(){
 
   chassis.pid_turn_set(270_deg,TURN_SPEED); //start off facing 90 deg
   chassis.pid_wait();
-  chassis.pid_drive_set(56_in, DRIVE_SPEED); //drive towards cluster of balls 58 inches
+  chassis.pid_drive_set(57_in, DRIVE_SPEED); //drive towards cluster of balls 58 inches
   chassis.pid_wait_until(44_in);//at 34 inches switch to ballgoalspeed -15
   lilRaaahh.set(true); //deploy matchloader mechanism to pick up balls
   chassis.pid_wait();
@@ -1200,15 +1629,15 @@ void optimizedSAWP(){
   middleIntakeMotor.move(127);
   topIntakeMotor.move(-10);
   //lilRaaahh.set(false); //set the matchloader mechanism to retracted
-  chassis.pid_drive_set(55.5_in, DRIVE_SPEED); //drive toward field perimeter wall direction 54.5
+  chassis.pid_drive_set(53.5_in, DRIVE_SPEED); //drive toward field perimeter wall direction 54.5
   chassis.pid_wait();
   topIntakeMotor.move(0); //stop the top intake motor
   chassis.pid_turn_set(180_deg, TURN_SPEED); //turn toward direction of the matchloader 
   chassis.pid_wait();
   middleIntakeMotor.move(127); //run first stage intake 
   pros::delay(50);
-  chassis.pid_drive_set(13_in,BALLGOAL_SPEED+10+5); //go into matchloader 13.5 inches
-  pros::delay(950); //1100
+  chassis.pid_drive_set(14_in,BALLGOAL_SPEED+4); //go into matchloader 13.5 inches
+  pros::delay(980); //1100
 
   middleIntakeMotor.move(100); //run the bottom intake stage 
   chassis.pid_drive_set(-31_in, DRIVE_SPEED+10+5); //go backwards into long goal 30
@@ -1812,6 +2241,113 @@ void passiveDrive(){
   chassis.pid_drive_set(-16_in,50); //towards goal 30 inches
   chassis.pid_wait();
 }
+void frontParkClear() {
+  chassis.drive_angle_set(180_deg); //face forward
+  chassis.pid_wait();
+  middleIntakeMotor.move(127); //bottom stage intake spins
+  topIntakeMotor.move(-20); //top stage intake spins at reduced speed
+  chassis.pid_drive_set(40_in, DRIVE_SPEED-20-20-20); //drive 60 inches forward into the parking zone
+  chassis.pid_wait();
+  for (int i = 0; i < 4; i++) {
+    chassis.pid_drive_set(4_in, BALLGOAL_SPEED-40); //back 1 in from matchload
+    pros::delay(300);
+    chassis.pid_turn_set(175.5_deg, TURN_SPEED);
+    pros::delay(300);
+    chassis.pid_turn_set(185.5_deg, TURN_SPEED);
+    pros::delay(300);
+  }
+  chassis.pid_drive_set(-20_in, DRIVE_SPEED); //drive back 20 inches to be fully in the parking zone
+  chassis.pid_wait();
+  chassis.pid_turn_set(180_deg, TURN_SPEED); //turn towards field perimeter wall
+  chassis.pid_wait();
+  chassis.pid_drive_set(10_in, DRIVE_SPEED-60); //drive forward 20 inches to be in line with middle goal
+  chassis.pid_wait();
+}
+
+void fivePlusThree(){
+  descore.set(true); //make sure descore is retracted at beginning of match
+  chassis.drive_angle_set(-24.5_deg);  
+  chassis.pid_wait();
+  middleIntakeMotor.move(127);
+  topIntakeMotor.move(-20);
+  chassis.pid_drive_set(30_in, DRIVE_SPEED); //32
+  chassis.pid_wait_until(15_in);
+  chassis.pid_speed_max_set(BALLGOAL_SPEED-20);
+  lilRaaahh.set(true);
+
+  chassis.pid_wait();
+  //pros::delay(50);
+
+  chassis.pid_turn_set(240_deg, TURN_SPEED);   
+  chassis.pid_wait();
+  chassis.pid_drive_set(31_in,DRIVE_SPEED-8-5); //32.5 non issam  and ballgoal + 10
+  chassis.pid_wait();
+  chassis.pid_turn_set(180_deg, TURN_SPEED);
+  chassis.pid_wait();
+  lilRaaahh.set(true);
+  middleIntakeMotor.move(30);
+  chassis.pid_drive_set(-12_in,DRIVE_SPEED); //drive back into the matchloader by 11 inches
+  pros::delay(500);
+  intake.move(127); //start intake
+  pros::delay(1210); //score the 4 balls 1300 usual
+  middleIntakeMotor.move(127);
+  topIntakeMotor.move(0);
+
+  chassis.pid_drive_set(37_in,DRIVE_SPEED); //35
+  chassis.pid_wait_until(14_in);
+  chassis.pid_speed_max_set(BALLGOAL_SPEED-5-5);
+
+   //forward 37 towards matchloader 
+  pros::delay(1100);
+
+   //forward 37 towards matchloader 
+  //intake.move(-15); //20
+  // middleIntakeMotor.move(35);
+
+  chassis.pid_drive_set(-12,DRIVE_SPEED); //-11.5
+  chassis.pid_wait();
+  //lilRaaahh.set(false);
+  chassis.pid_turn_set(210_deg, TURN_SPEED);
+  chassis.pid_wait();
+  lilRaaahh.set(false);
+
+  middleIntakeMotor.move(127);
+  topIntakeMotor.move(-15);
+  // topIntakeMotor.move(-20);
+  chassis.pid_drive_set(-42_in, DRIVE_SPEED); //55
+  chassis.pid_wait();
+
+  chassis.pid_turn_set(285_deg, TURN_SPEED);
+  chassis.pid_wait_quick();
+  chassis.pid_drive_set(17_in, DRIVE_SPEED+10); //drive in by 16 incehs into matchloader 18
+  chassis.pid_wait_until(2_in); //wait for 4 inches before switching to ballgoal speed 
+  chassis.pid_speed_max_set(BALLGOAL_SPEED-20); 
+  chassis.pid_wait_until(12_in); //wait for 4 inches before switching to ballgoal speed
+  lilRaaahh.set(true); //deploy matchload mech once at cluster of balls
+  chassis.pid_wait();
+  pros::delay(20);
+
+  chassis.pid_drive_set(-19_in, DRIVE_SPEED+10); //drive in by 16 incehs into matchloader 18
+  chassis.pid_wait();
+  chassis.pid_turn_set(-45_deg, TURN_SPEED);
+  chassis.pid_wait();
+  chassis.pid_drive_set(-12_in, DRIVE_SPEED+5); //drive 33 inches toward 3 cluster of balls at drive_speed-5
+  chassis.pid_wait();
+
+  chassis.pid_turn_set(226_deg, TURN_SPEED);
+  chassis.pid_wait();
+
+  chassis.pid_drive_set(-13_in, DRIVE_SPEED); //55
+  chassis.pid_wait_until(-5_in);
+  chassis.pid_speed_max_set(BALLGOAL_SPEED);
+  chassis.pid_wait();
+
+  lilRaaahh.set(true);
+  intake.move(-30);
+  middleGoalScore.set(true);
+  middleIntakeMotor.move(100);  //110
+  topIntakeMotor.move(-60);
+}
 
 void inverse34(){
   // chassis.drive_angle_set(270_deg); //face 90 deg to perimeter wall
@@ -1861,8 +2397,9 @@ void inverse34(){
   pros::delay(50);
 
   chassis.pid_turn_set(240_deg, TURN_SPEED);   
-  chassis.pid_wait();
-  chassis.pid_drive_set(31_in,DRIVE_SPEED-8-5); //32.5 non issam  and ballgoal + 10
+  pros::delay(700);
+  //chassis.pid_wait();
+  chassis.pid_drive_set(29.5_in,DRIVE_SPEED-8-5); //32.5 non issam  and ballgoal + 10
   chassis.pid_wait();
   chassis.pid_turn_set(180_deg, TURN_SPEED);
   chassis.pid_wait();
@@ -1871,20 +2408,20 @@ void inverse34(){
   chassis.pid_drive_set(-12_in,DRIVE_SPEED); //drive back into the matchloader by 11 inches
   pros::delay(500);
   intake.move(127); //start intake
-  pros::delay(1210); //score the 4 balls 1300 usual
+  pros::delay(1300); //score the 4 balls 1300 usual
   middleIntakeMotor.move(127);
-  topIntakeMotor.move(0);
+  topIntakeMotor.move(-20);
 
-  chassis.pid_drive_set(37_in,DRIVE_SPEED); //35
+  chassis.pid_drive_set(36_in,DRIVE_SPEED); //35
   chassis.pid_wait_until(14_in);
   chassis.pid_speed_max_set(BALLGOAL_SPEED-5-5);
 
    //forward 37 towards matchloader 
-  pros::delay(1100);
+  pros::delay(940);
   //intake.move(-15); //20
   // middleIntakeMotor.move(35);
 
-  chassis.pid_drive_set(-12,DRIVE_SPEED); //-11.5
+  chassis.pid_drive_set(-9.5_in,DRIVE_SPEED); //-11.5
   chassis.pid_wait();
   //lilRaaahh.set(false);
   chassis.pid_turn_set(226_deg, TURN_SPEED);
@@ -1892,15 +2429,17 @@ void inverse34(){
 
   // chassis.pid_drive_set(-54_in, DRIVE_SPEED-5);
   // middleIntakeMotor.move(50);
-  intake.move(-15);
-  // topIntakeMotor.move(-20);
-  chassis.pid_drive_set(-53_in, DRIVE_SPEED); //55
+  middleIntakeMotor.move(-10);
+  
+  topIntakeMotor.move(-40);
+  chassis.pid_drive_set(-56_in, DRIVE_SPEED-5); //55
   chassis.pid_wait_until(-40_in);
   chassis.pid_speed_max_set(BALLGOAL_SPEED);
    //drive 55 inches towards field perimeter wall
   chassis.pid_wait_until(-25_in); //-30
   middleGoalScore.set(true); 
   chassis.pid_wait();
+  //pros::delay(600);
 
   middleIntakeMotor.move(100);  //110
   topIntakeMotor.move(-60);
@@ -1909,9 +2448,9 @@ void inverse34(){
   chassis.pid_drive_set(14_in,DRIVE_SPEED); //12
   chassis.pid_wait();
   middleGoalDescore.set(true);
-  chassis.pid_drive_set(-11_in,BALLGOAL_SPEED); //12
+  chassis.pid_drive_set(-11_in,DRIVE_SPEED); //12
   chassis.pid_wait();
-  chassis.pid_drive_set(37_in,DRIVE_SPEED); //38
+  chassis.pid_drive_set(36_in,DRIVE_SPEED); //38
   chassis.pid_wait();
   middleGoalDescore.set(false);
   middleGoalScore.set(false); 
@@ -1919,8 +2458,10 @@ void inverse34(){
   chassis.pid_turn_set(180_deg, TURN_SPEED);
   chassis.pid_wait();
   descore.set(false);
-  chassis.pid_drive_set(-25_in,DRIVE_SPEED-25); //+5 and -27 for fast -10 slow and -25
+  chassis.pid_drive_set(-27_in,DRIVE_SPEED-5); //+5 and -27 for fast -10 slow and -25
   chassis.pid_wait();
+  // chassis.pid_turn_set(185_deg, TURN_SPEED);
+  // chassis.pid_wait();
   lilRaaahh.set(false);
 }
 
@@ -2102,16 +2643,16 @@ void ogSkills(){
   chassis.pid_wait();
 }
 
-void leftSideSkills(){
+void fast81(){
   //first quadrant 
   descore.set(true);
   chassis.drive_angle_set(270_deg); //face 270 deg to perimeter wall
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(31.5_in,DRIVE_SPEED); //towards goal 33 inches
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   lilRaaahh.set(true); //lil will deploy
   chassis.pid_turn_set(180_deg,TURN_SPEED+10); //turn towards matchloader
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   pros::delay(100);
   // lilRaaahh.set(true); //matchloader deploy
   middleIntakeMotor.move(127); //first stage intake spin 
@@ -2119,14 +2660,14 @@ void leftSideSkills(){
   chassis.pid_drive_set(12_in,DRIVE_SPEED-10); //towards matchload 15 inches
   chassis.pid_wait_until(6_in); //at 6 inches switch to ballgoalspeed
   chassis.pid_speed_max_set(BALLGOAL_SPEED+5-5-5);
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   pros::delay(700); //time for matchloading 
   chassis.pid_drive_set(-17_in, DRIVE_SPEED+10); //backward to goal 17 inches
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   lilRaaahh.set(false); //matchloader retract
 
   // //turning to other side/going to other side
@@ -2134,19 +2675,19 @@ void leftSideSkills(){
   pros::delay(1000); //1000
   intake.move(0); //intake stop spinning
   chassis.pid_drive_set(16_in, DRIVE_SPEED+10); //16 in towards perimeter wall
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_turn_set(0_deg,TURN_SPEED+10); //turn towards other side matchload/perimeter 0 deg
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(64_in,DRIVE_SPEED-10-5-5); //go towards other side 65 in
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
 
   // //next quadrant
   chassis.pid_turn_set(53_deg,TURN_SPEED+10); //turn 50 deg to start alinging with long goal
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(15_in,DRIVE_SPEED+10); //17 inches diagonal movement to long goal
   pros::delay(650);
   chassis.pid_turn_set(0_deg,TURN_SPEED+10); //turn towards matchload with bot facing forwards 0 deg
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(-14_in,DRIVE_SPEED+10); //backward to long goal by 15
   // chassis.pid_wait();
   pros::delay(300);
@@ -2160,15 +2701,15 @@ void leftSideSkills(){
   chassis.pid_drive_set(42_in,DRIVE_SPEED); //forward 43
   chassis.pid_wait_until(12_in); //at 12 inches switch to ballgoalspeed+10
   chassis.pid_speed_max_set(BALLGOAL_SPEED+5-5);
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   pros::delay(600); //delay for intaking at matchload 600 ms
   intake.move(-5); //moving intake backward to prevent jamming
   chassis.pid_drive_set(-33_in,DRIVE_SPEED+10); //backwards 33 
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   //pros::delay(300);
   // // middleIntakeMotor.move(127); //controlled intake scoring so balls dont bounce out
   // // topIntakeMotor.move(100);
@@ -2177,9 +2718,9 @@ void leftSideSkills(){
   topIntakeMotor.move(100);
   pros::delay(2200); //delay for scoring at long goal
   chassis.pid_drive_set(4_in,127);//back forth goals for control 4 out 
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(-5_in, 30); //back forth goals for control 5 in
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   middleIntakeMotor.move(0); //stop intake stages 
   topIntakeMotor.move(0);
   lilRaaahh.set(false); //retract matchloader mech
@@ -2197,41 +2738,41 @@ void leftSideSkills(){
   // chassis.pid_wait();
 
   chassis.pid_drive_set(22_in, DRIVE_SPEED); //drive towards long goal
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_turn_set(134_deg,TURN_SPEED); //224
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   middleIntakeMotor.move(127);
   topIntakeMotor.move(-10);
   chassis.pid_drive_set(40_in, DRIVE_SPEED+5); //drive towards cluster of balls 48 inches
   chassis.pid_wait_until(12_in);//at 35 inches switch to ballgoalspeed -15
   chassis.pid_speed_max_set(BALLGOAL_SPEED-30);
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
 
   //second 4 balls stack
   chassis.pid_turn_set(86_deg, TURN_SPEED+10); //turn toward other 4 balls stack 86 before
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   middleIntakeMotor.move(127);
   chassis.pid_drive_set(53_in, DRIVE_SPEED+5); //drive towards long goal 53 old 
   chassis.pid_wait_until(21_in);//at 21 inches switch to ballgoalspeed -20
   chassis.pid_speed_max_set(BALLGOAL_SPEED-20);
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   topIntakeMotor.move(-20);
   middleIntakeMotor.move(0);
   
   chassis.pid_drive_set(-9_in, DRIVE_SPEED+10); //back away from balls a bit 10 inches 
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   lilRaaahh.set(true); //prepare matchloader to score
   //middle goal scoring 
   chassis.pid_turn_set(45_deg,TURN_SPEED+10); //45
   //lilRaaahh.set(true);
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   intake.move(-40);
   //middleIntakeMotor.move(-30);
   //topIntakeMotor.move(-60);
   chassis.pid_drive_set(-22_in, DRIVE_SPEED); //drive back 23
   chassis.pid_wait_until(-19_in);
   middleGoalScore.set(true);
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   //intake.move(0);
   // middleIntakeMotor.move(110);
   // //topIntakeMotor.move(-40);
@@ -2251,9 +2792,9 @@ void leftSideSkills(){
   topIntakeMotor.move(0); //-60 top 
   pros::delay(600); //3500
   chassis.pid_drive_set(4_in, DRIVE_SPEED-50); //drive forward 23 inches to be fully in the parking zone
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(-3_in, DRIVE_SPEED-50); //drive back 23 inches to be fully in the parking zone
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   pros::delay(500);
 
 
@@ -2264,14 +2805,14 @@ void leftSideSkills(){
 
   //new stuff for skills
   chassis.pid_drive_set(53_in,DRIVE_SPEED+5+5); //move toward field perimeter by 55 inches 
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   // middleGoalScore.set(false);
 
   intake.move(0);
   middleIntakeMotor.move(127);
   lilRaaahh.set(true);
   chassis.pid_turn_set(0_deg, TURN_SPEED+10); //face the matchloader 
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   pros::delay(100);
   middleGoalScore.set(false);
   // lilRaaahh.set(true);
@@ -2281,33 +2822,33 @@ void leftSideSkills(){
   chassis.pid_drive_set(29_in, BALLGOAL_SPEED); //30
   chassis.pid_wait_until(5_in); //at 15 inches switch to ballgoalspeed
   chassis.pid_speed_max_set(BALLGOAL_SPEED+5-5-5);
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   pros::delay(600);
 
   chassis.pid_drive_set(-15_in, DRIVE_SPEED+10); //backward to goal 15 inches
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   lilRaaahh.set(false); //matchloader retract
   chassis.pid_turn_set(135_deg,TURN_SPEED); // 135 deg to perimeter wall
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   intake.move(0); //intake stop spinning
 
   chassis.pid_drive_set(18_in,DRIVE_SPEED+5); //22 in towards perimeter wall
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_turn_set(180_deg,TURN_SPEED+10); //turn towards other side matchload/perimeter 180 deg
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(60_in,DRIVE_SPEED-10-5); //go towards other side 65 in
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_turn_set(230_deg,TURN_SPEED+10); //turn 130 before now 230 deg to start alinging with long goal
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(17_in,DRIVE_SPEED+5); //16 inches diagonal movement to long goal
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   middleIntakeMotor.move(-10);
   chassis.pid_turn_set(180_deg,TURN_SPEED); //turn towards matchload with bot facing forwards 180 deg
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(-13_in,DRIVE_SPEED+5); //backward to long goal by 22 in skillsCut
   // chassis.pid_wait();
   pros::delay(300);
@@ -2322,11 +2863,11 @@ void leftSideSkills(){
   chassis.pid_drive_set(41_in,DRIVE_SPEED); //forward 47 in skillsCut towards matchloader 
   chassis.pid_wait_until(15_in); //at 15 inches switch to ballgoalspeed
   chassis.pid_speed_max_set(BALLGOAL_SPEED+5-5); //+2
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
   pros::delay(450); //delay for intaking at matchload 450 ms
 
   //intake.move(-10); //moving intake backward to prevent jamming
@@ -2389,6 +2930,316 @@ void leftSideSkills(){
   // chassis.pid_wait();
 
   chassis.drive_angle_set(180_deg);
+  chassis.pid_wait_quick();
+  chassis.pid_drive_set(7_in,DRIVE_SPEED+10); //7
+  chassis.pid_wait_quick();
+  chassis.pid_turn_set(220_deg, TURN_SPEED); //228
+  chassis.pid_wait_quick();
+  chassis.pid_drive_set(35_in,DRIVE_SPEED+10); //33 +10 and 42
+  //chassis.pid_wait();
+  pros::delay(1100);
+  middleIntakeMotor.move(127);
+  chassis.pid_swing_set(ez::LEFT_SWING, 265_deg, 120); //265
+  //chassis.pid_wait();
+  pros::delay(600);
+  // chassis.pid_drive_set(35_in, 125); //125 and 35
+  // chassis.pid_wait();
+  chassis.pid_drive_set(32_in, 85 ); //125 and 28
+  chassis.pid_wait_quick();
+  chassis.pid_drive_set(-4_in, 85); //125 and 35
+  chassis.pid_wait_quick();
+}
+
+void leftSideSkills(){
+  //first quadrant 
+  descore.set(true);
+  chassis.drive_angle_set(270_deg); //face 270 deg to perimeter wall
+  chassis.pid_wait();
+  chassis.pid_drive_set(31.5_in,DRIVE_SPEED); //towards goal 33 inches
+  chassis.pid_wait();
+  lilRaaahh.set(true); //lil will deploy
+  chassis.pid_turn_set(180_deg,TURN_SPEED+10); //turn towards matchloader
+  chassis.pid_wait();
+  pros::delay(100);
+  // lilRaaahh.set(true); //matchloader deploy
+  middleIntakeMotor.move(127); //first stage intake spin 
+  topIntakeMotor.move(-35);
+  chassis.pid_drive_set(11_in,DRIVE_SPEED-14); //towards matchload 15 inches
+  chassis.pid_wait_until(6_in); //at 6 inches switch to ballgoalspeed
+  chassis.pid_speed_max_set(BALLGOAL_SPEED-13); //-10
+  chassis.pid_wait();
+  chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
+  chassis.pid_wait();
+  chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
+  chassis.pid_wait();
+  pros::delay(700); //time for matchloading 
+  chassis.pid_drive_set(-17_in, DRIVE_SPEED+10); //backward to goal 17 inches
+  chassis.pid_wait();
+  lilRaaahh.set(false); //matchloader retract
+
+  // //turning to other side/going to other side
+  chassis.pid_turn_set(300_deg,TURN_SPEED+10); //300 deg to perimeter wall
+  pros::delay(1000); //1000
+  intake.move(0); //intake stop spinning
+  chassis.pid_drive_set(16_in, DRIVE_SPEED+10); //16 in towards perimeter wall
+  chassis.pid_wait();
+  chassis.pid_turn_set(0_deg,TURN_SPEED+10); //turn towards other side matchload/perimeter 0 deg
+  chassis.pid_wait();
+  chassis.pid_drive_set(64_in,DRIVE_SPEED-10-5-5); //go towards other side 65 in
+  chassis.pid_wait();
+
+  // //next quadrant
+  chassis.pid_turn_set(53_deg,TURN_SPEED+10); //turn 50 deg to start alinging with long goal
+  chassis.pid_wait();
+  chassis.pid_drive_set(14.5_in,DRIVE_SPEED+10); //17 inches diagonal movement to long goal
+  pros::delay(650);
+  chassis.pid_turn_set(0_deg,TURN_SPEED+10); //turn towards matchload with bot facing forwards 0 deg
+  chassis.pid_wait();
+  chassis.pid_drive_set(-14_in,DRIVE_SPEED+10); //backward to long goal by 15
+  // chassis.pid_wait();
+  pros::delay(300);
+  intake.move(127); //intaking at goals
+  pros::delay(1950); //delay for scoring at long goal 
+  intake.move(0);
+  lilRaaahh.set(true); //matchload mech deploy 
+  middleIntakeMotor.move(127); //first stage intake spin
+  topIntakeMotor.move(-15);
+  pros::delay(100);
+  chassis.pid_drive_set(43_in,DRIVE_SPEED); //forward 43
+  chassis.pid_wait_until(12_in); //at 12 inches switch to ballgoalspeed+10
+  chassis.pid_speed_max_set(BALLGOAL_SPEED); //ballgoal
+  chassis.pid_wait();
+  chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
+  chassis.pid_wait();
+  chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
+  chassis.pid_wait();
+  pros::delay(600); //delay for intaking at matchload 600 ms
+  intake.move(-5); //moving intake backward to prevent jamming
+  chassis.pid_drive_set(-32_in,DRIVE_SPEED+5); //backwards 33 
+  chassis.pid_wait();
+  //pros::delay(300);
+  // // middleIntakeMotor.move(127); //controlled intake scoring so balls dont bounce out
+  // // topIntakeMotor.move(100);
+  // intake.move(127); //intake 
+  middleIntakeMotor.move(127);
+  topIntakeMotor.move(127);
+  pros::delay(2200); //delay for scoring at long goal
+  chassis.pid_drive_set(4_in,127);//back forth goals for control 4 out 
+  chassis.pid_wait();
+  chassis.pid_drive_set(-5_in, 30); //back forth goals for control 5 in
+  chassis.pid_wait();
+  middleIntakeMotor.move(0); //stop intake stages 
+  topIntakeMotor.move(0);
+  lilRaaahh.set(false); //retract matchloader mech
+
+  //middle section 
+  //first 4 balls stack
+  // chassis.pid_drive_set(20_in, DRIVE_SPEED); //drive towards long goal 23 inches 
+  // chassis.pid_wait();
+  // chassis.pid_turn_set(135_deg,TURN_SPEED+5); //135 deg 
+  // pros::delay(850); //850 delay ms 
+  // middleIntakeMotor.move(127);
+  // chassis.pid_drive_set(40_in, DRIVE_SPEED+10); //drive towards cluster of balls 40 inches
+  // chassis.pid_wait_until(13_in); //at 14 inches switch to ballgoalspeed -20 
+  // chassis.pid_speed_max_set(BALLGOAL_SPEED-20);
+  // chassis.pid_wait();
+
+  chassis.pid_drive_set(22_in, DRIVE_SPEED); //drive towards long goal
+  chassis.pid_wait();
+  chassis.pid_turn_set(134_deg,TURN_SPEED); //224
+  chassis.pid_wait();
+  middleIntakeMotor.move(127);
+  topIntakeMotor.move(-10);
+  chassis.pid_drive_set(40_in, DRIVE_SPEED+5); //drive towards cluster of balls 48 inches
+  chassis.pid_wait_until(12_in);//at 35 inches switch to ballgoalspeed -15
+  chassis.pid_speed_max_set(BALLGOAL_SPEED-30);
+  chassis.pid_wait();
+
+  //second 4 balls stack
+  chassis.pid_turn_set(86_deg, TURN_SPEED+10); //turn toward other 4 balls stack 86 before
+  chassis.pid_wait();
+  middleIntakeMotor.move(127);
+  chassis.pid_drive_set(53_in, DRIVE_SPEED+5); //drive towards long goal 53 old 
+  chassis.pid_wait_until(21_in);//at 21 inches switch to ballgoalspeed -20
+  chassis.pid_speed_max_set(BALLGOAL_SPEED-20);
+  chassis.pid_wait();
+  topIntakeMotor.move(-20);
+  middleIntakeMotor.move(0);
+  
+  chassis.pid_drive_set(-11_in, DRIVE_SPEED+10); //back away from balls a bit 10 inches 
+  chassis.pid_wait();
+  lilRaaahh.set(true); //prepare matchloader to score
+  //middle goal scoring 
+  chassis.pid_turn_set(45_deg,TURN_SPEED+10); //45
+  //lilRaaahh.set(true);
+  chassis.pid_wait();
+  intake.move(-35); //intake back
+  // topIntakeMotor.move(-127);
+  // middleIntakeMotor.move(-20);
+  //middleIntakeMotor.move(-30);
+  //topIntakeMotor.move(-60);
+  chassis.pid_drive_set(-22_in, DRIVE_SPEED); //drive back 23
+  chassis.pid_wait_until(-19_in);
+  middleGoalScore.set(true);
+  chassis.pid_wait();
+  //intake.move(0);
+  // middleIntakeMotor.move(110);
+  // //topIntakeMotor.move(-40);
+  // //topIntakeMotor.move(-80); //old middle goal scoring 
+  // pros::delay(2200); //delay for scoring at middle goal
+  // middleIntakeMotor.move(90);
+  // pros::delay(1500); //delay for scoring at middle goal
+
+  // middleIntakeMotor.move(90); //90 bottom 
+  // topIntakeMotor.move(-70); //-60 top 
+  // pros::delay(3500); //3500
+
+  middleIntakeMotor.move(100); //90 bottom  
+  topIntakeMotor.move(-60); //-60 top 
+  pros::delay(2900); //3500
+  //middleIntakeMotor.move(80); //90 bottom 
+  //topIntakeMotor.move(0); //-60 top 
+  //pros::delay(1100); //3500
+  chassis.pid_drive_set(4_in, DRIVE_SPEED-50); //drive forward 23 inches to be fully in the parking zone
+  chassis.pid_wait();
+  chassis.pid_drive_set(-3_in, DRIVE_SPEED-50); //drive back 23 inches to be fully in the parking zone
+  chassis.pid_wait();
+  pros::delay(1200);
+
+
+  // topIntakeMotor.move(90);
+  // middleIntakeMotor.move(-40);
+  intake.move(127); //20
+  lilRaaahh.set(false);
+
+  //new stuff for skills
+  chassis.pid_drive_set(54_in,DRIVE_SPEED+5+5+5); //move toward field perimeter by 55 inches 
+  chassis.pid_wait();
+  // middleGoalScore.set(false);
+
+  intake.move(0);
+  middleIntakeMotor.move(127);
+  lilRaaahh.set(true);
+  chassis.pid_turn_set(0_deg, TURN_SPEED+10); //face the matchloader 
+  chassis.pid_wait();
+  pros::delay(100);
+  middleGoalScore.set(false);
+  // lilRaaahh.set(true);
+  middleIntakeMotor.move(127); //run bottom intake motor to intake the 3 balls
+  topIntakeMotor.move(-15);
+  //topIntakeMotor.move(0); //stop top intake motor
+  chassis.pid_drive_set(29_in, BALLGOAL_SPEED); //30
+  chassis.pid_wait_until(5_in); //at 15 inches switch to ballgoalspeed
+  chassis.pid_speed_max_set(BALLGOAL_SPEED+5-5-5);
+  chassis.pid_wait();
+  chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
+  chassis.pid_wait();
+  chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
+  chassis.pid_wait();
+  pros::delay(600);
+
+  chassis.pid_drive_set(-15_in, DRIVE_SPEED+10); //backward to goal 15 inches
+  chassis.pid_wait();
+  lilRaaahh.set(false); //matchloader retract
+  chassis.pid_turn_set(135_deg,TURN_SPEED); // 135 deg to perimeter wall
+  // chassis.pid_wait();
+  pros::delay(800);
+  intake.move(0); //intake stop spinning
+
+  chassis.pid_drive_set(18_in,DRIVE_SPEED+5); //22 in towards perimeter wall
+  chassis.pid_wait();
+  chassis.pid_turn_set(180_deg,TURN_SPEED+10); //turn towards other side matchload/perimeter 180 deg
+  chassis.pid_wait();
+  chassis.pid_drive_set(60_in,DRIVE_SPEED-10-5); //go towards other side 65 in
+  chassis.pid_wait();
+  chassis.pid_turn_set(230_deg,TURN_SPEED+10); //turn 130 before now 230 deg to start alinging with long goal
+  chassis.pid_wait();
+  chassis.pid_drive_set(16_in,DRIVE_SPEED+5); //16 inches diagonal movement to long goal
+  chassis.pid_wait();
+  middleIntakeMotor.move(-10);
+  chassis.pid_turn_set(180_deg,TURN_SPEED); //turn towards matchload with bot facing forwards 180 deg
+  chassis.pid_wait();
+  chassis.pid_drive_set(-13_in,DRIVE_SPEED+5); //backward to long goal by 22 in skillsCut
+  // chassis.pid_wait();
+  pros::delay(300);
+  intake.move(127); //intaking at goals
+  pros::delay(1900); //delay for scoring at long goal 
+  intake.move(0);
+
+  lilRaaahh.set(true); //matchload mech deploy 
+  middleIntakeMotor.move(127); //first stage intake spin
+  topIntakeMotor.move(-30);
+  pros::delay(100);
+  chassis.pid_drive_set(41_in,DRIVE_SPEED); //forward 47 in skillsCut towards matchloader 
+  chassis.pid_wait_until(15_in); //at 15 inches switch to ballgoalspeed
+  chassis.pid_speed_max_set(BALLGOAL_SPEED-2); //+2
+  chassis.pid_wait();
+  chassis.pid_drive_set(-1_in,BALLGOAL_SPEED+10); //back 1 in from matchload
+  chassis.pid_wait();
+  chassis.pid_drive_set(2_in,BALLGOAL_SPEED+10); //forward 2 in to matchload
+  chassis.pid_wait();
+  pros::delay(450); //delay for intaking at matchload 450 ms
+
+  //intake.move(-10); //moving intake backward to prevent jamming
+  chassis.pid_drive_set(-35_in,DRIVE_SPEED+5); //backwards 33 before in skillsCut/now 37 to long goal +10
+  pros::delay(800);
+  middleIntakeMotor.move(-10);
+  // // middleIntakeMotor.move(127); //controlled intake scoring so balls dont bounce out
+  // // topIntakeMotor.move(100);
+  //intake.move(127);
+  middleIntakeMotor.move(127);
+  topIntakeMotor.move(127);
+  pros::delay(2200); //delay for scoring at long goal
+  chassis.pid_drive_set(4_in,127); //back forth goals for control 4 out 
+  pros::delay(450);
+  chassis.pid_drive_set(-5_in, 70); //back forth goals for control 5 in
+  pros::delay(450);
+  // chassis.pid_drive_set(4_in,DRIVE_SPEED); //back forth goals for control 4 out 
+  // chassis.pid_wait();
+  // chassis.pid_drive_set(-5_in, 30); //back forth goals for control 5 in
+  // chassis.pid_wait();
+  middleIntakeMotor.move(0); //stop intake stages 
+  topIntakeMotor.move(0);
+  lilRaaahh.set(false); //retract matchloader mech
+
+  //new park
+  // chassis.pid_drive_set(8_in,DRIVE_SPEED+10); //8
+  // chassis.pid_wait();
+  // chassis.pid_turn_set(228_deg, TURN_SPEED+20);
+  // chassis.pid_wait();
+  // chassis.pid_drive_set(42_in,DRIVE_SPEED+10); //33
+  // pros::delay(900);
+
+  // middleIntakeMotor.move(127);
+  // //topIntakeMotor.move(-40);
+  // chassis.pid_swing_set(ez::LEFT_SWING, 265_deg, 120);
+  // // chassis.pid_wait();
+  // pros::delay(300);
+  // chassis.pid_drive_set(31_in, 125); //125 and 28
+  // chassis.pid_wait();
+  // chassis.pid_drive_set(-5_in, 125); //125 and 35
+  // chassis.pid_wait();
+
+  //old pre tune
+  // chassis.pid_drive_set(7_in,DRIVE_SPEED+10); //7
+  // chassis.pid_wait();
+  // chassis.pid_turn_set(228_deg, TURN_SPEED);
+  // chassis.pid_wait();
+  // chassis.pid_drive_set(42_in,DRIVE_SPEED-10); //33 +10
+  // chassis.pid_wait();
+  // //pros::delay(900);
+  // middleIntakeMotor.move(127);
+  // chassis.pid_swing_set(ez::LEFT_SWING, 260_deg, 120); //265
+  // chassis.pid_wait();
+  // // pros::delay(300);
+  // // chassis.pid_drive_set(35_in, 125); //125 and 35
+  // // chassis.pid_wait();
+  // chassis.pid_drive_set(29_in, 85); //125 and 28
+  // chassis.pid_wait();
+  // chassis.pid_drive_set(-5_in, 85); //125 and 35
+  // chassis.pid_wait();
+
+  chassis.drive_angle_set(180_deg);
   chassis.pid_wait();
   chassis.pid_drive_set(7_in,DRIVE_SPEED+10); //7
   chassis.pid_wait();
@@ -2403,7 +3254,7 @@ void leftSideSkills(){
   pros::delay(600);
   // chassis.pid_drive_set(35_in, 125); //125 and 35
   // chassis.pid_wait();
-  chassis.pid_drive_set(32_in, 85 ); //125 and 28
+  chassis.pid_drive_set(31_in, 70 ); //125 and 28
   chassis.pid_wait();
   chassis.pid_drive_set(-4_in, 85); //125 and 35
   chassis.pid_wait();
@@ -2811,4 +3662,4 @@ void measure_offsets() {
 
 // . . .
 // Make your own autonomous functions here!
-// . .
+// . .  

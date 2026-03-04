@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "skills",
+    "project_name": "skils",
     "target": "v5",
     "templates": {
       "EZ-Template": {
