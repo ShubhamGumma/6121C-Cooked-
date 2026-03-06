@@ -49,3 +49,5 @@ void fourCamp();
 void stogaSAWP();
 void finalSkills();
 void newMiddle();
+void thirdPart();
+void sevenMid();
