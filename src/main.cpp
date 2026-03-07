@@ -60,7 +60,7 @@ void initialize() {
 
   // Autonomous Selector using LLEMU
   ez::as::auton_selector.autons_add({
-      {"Drive\n\nDrive forward and come back", sevenMid},
+      {"Drive\n\nDrive forward and come back", finalSkills},
       {"Turn\n\nTurn 3 times.", turn_example},
       {"Drive and Turn\n\nDrive forward, turn, come back", drive_and_turn},
       {"Drive and Turn\n\nSlow down during drive", wait_until_change_speed},
@@ -289,18 +289,18 @@ void opcontrol() {
     else if (master.get_digital_new_press(DIGITAL_RIGHT)) {
       middleGoalDescore.set(!middleGoalDescore.get()); //piston toggle to deploy matchloader mechanism
     }
-    // else if (master.get_digital_new_press(DIGITAL_LEFT)){ //only for pid turn tunning
-    //   // chassis.odom_theta_set(0_deg);
-    //   // chassis.pid_turn_set(90_deg, 90);
-    //   // chassis.pid_wait();
-    //   // //std::cout << chassis.odom_theta_get() << std::endl;
-    //   // pros::lcd::print(0,"Heading: %f" ,chassis.odom_theta_get());
+    else if (master.get_digital_new_press(DIGITAL_LEFT)){ //only for pid turn tunning
+      // chassis.odom_theta_set(0_deg);
+      // chassis.pid_turn_set(90_deg, 90);
+      // chassis.pid_wait();
+      // //std::cout << chassis.odom_theta_get() << std::endl;
+      // pros::lcd::print(0,"Heading: %f" ,chassis.odom_theta_get());
 
-    //   //frontDistance.reset(); //reset distance sensor to 0
-    //   double frontDist = (frontDistance.get())*0.0393701; //convert from mm to inches
-    //   pros::lcd::print(0, "Distance: %f inches", frontDist);
+      //frontDistance.reset(); //reset distance sensor to 0
+      double frontDist = (frontDistance.get())*0.0393701; //convert from mm to inches
+      pros::lcd::print(0, "Distance: %f inches", frontDist);
 
-    // }
+    }
     else if (master.get_digital(DIGITAL_R1)) {
       //topIntakeMotor.move(-15); //top intake spins only for skills 
       middleIntakeMotor.move(127); //only middle intake spins 
