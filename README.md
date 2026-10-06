@@ -1,20 +1,22 @@
-# 6121C Competition Robot
+# 6121C Competition Code
 
-C++ competition software for VEX Team 6121C's 2025–26 Push Back robot, built on PROS and EZ-Template. Combines drivetrain PID tuning, IMU heading feedback, field-relative distance correction, and coordinated motor/pneumatic control across match autonomous and Robot Skills routines.
+C++ competition software for VEX Team 6121C's 2025–26 Push Back robot, built on PROS and EZ-Template. The robot uses feedback-controlled motion, distance sensing, and coordinated scoring mechanisms to run autonomous match and skills routines.
+
+**Peak #35 globally in Robot Skills · 20 total competition awards**
 
 ## Highlights
 
-- **Peak #35 globally in Robot Skills; 20 total competition awards**, including **5× Tournament Champion**, **8× Robot Skills Champion**, **2× Excellence Award**, **3× Tournament Finalist**, **Build Award**, and **Think Award**.
-- Tuned separate drive, heading, turn, and swing control loops, with motion-specific gains, settling tolerances, slew limits, and chaining thresholds.
-- Recomputed approach distances from forward range measurements to correct accumulated longitudinal error against known field geometry.
-- Coordinated scoring actions with distance/heading milestones, adjusted motor-output limits during motion, and chained consecutive movements to reduce settling overhead.
-- Sequenced independent intake motors and pneumatic actuators across collection, loading, scoring, and parking routines, with optical hue/proximity sampling and task-based intake-recovery logic.
+- **Motion control:** tuned drive, heading, turn, and swing controllers, including acceleration limits and settling thresholds.
+- **Position correction:** used a forward distance sensor to adjust approaches against known field geometry.
+- **Faster autonomous sequences:** changed speed during motion, triggered mechanisms at measured positions, and chained movements without unnecessary stops.
+- **Mechanism coordination:** controlled separate intake motors and pneumatics, with optical-sensing and intake-recovery helpers.
+- **Competition results:** 5× Tournament Champion and 8× Robot Skills Champion, plus Excellence, Finalist, Build, and Think awards. [Full breakdown below.](#competition-performance)
 
 ## Autonomous control
 
-The autonomous period requires the robot to execute without driver input. Each routine coordinates chassis motion and mechanism commands through feedback-based waits, intermediate motion milestones, and timed scoring interactions. The central tuning problem is completing the sequence within the time budget while controlling overshoot, approach alignment, and mechanism timing.
+During autonomous, the robot must drive, collect objects, and score without driver input. Each routine coordinates movement with intake and pneumatic actions. The challenge is finishing within the time limit while keeping turns, approaches, and scoring repeatable.
 
-Before dispatching the selected routine, `autonomous()` in [`src/main.cpp`](src/main.cpp) establishes the run's heading and position references:
+Before running the selected routine, `autonomous()` in [`src/main.cpp`](src/main.cpp) resets the motion references:
 
 ```cpp
 chassis.pid_targets_reset();
@@ -24,7 +26,7 @@ chassis.odom_xyt_set(0_in, 0_in, 0_deg);
 chassis.drive_brake_set(MOTOR_BRAKE_HOLD);
 ```
 
-This clears prior targets, zeros IMU heading and drivetrain measurements, initializes the estimated pose, and enables hold braking. The reference frame is relative to the robot's physical starting placement; IMU calibration occurs separately during chassis initialization.
+This clears previous targets, zeros heading and drive measurements, and resets the estimated position and orientation. Hold braking resists movement while stopped. These references depend on the physical starting placement; IMU calibration happens separately during initialization.
 
 ## Closed-loop motion
 
@@ -37,17 +39,24 @@ The routines command target distances and headings through EZ-Template rather th
 | `pid_swing_set` | A turn with one side acting as the pivot. |
 | `pid_odom_set` | Movement using an estimated position, including coordinate-based paths. |
 
-EZ-Template closes the feedback loops around drivetrain measurements and IMU heading. Our tuning sets the gains and termination behavior for the robot's mechanical response: acceleration, overshoot, heading deviation under load, and settling near a target. Battery voltage and drivetrain load change that response; wheel slip and contact can also introduce measurement error.
+The controller compares the measured distance or heading with the target and adjusts motor output as the robot moves. Feedback helps it respond to changes in battery voltage and drivetrain load. Wheel slip and contact can still introduce position error.
 
-[`default_constants()`](src/autons.cpp) defines separate drive, heading, turn, swing, and odometry gains. The configured integral gains are zero, so these PID interfaces currently operate with proportional and derivative terms. Exit conditions combine position or angular error bands with dwell times and timeout limits. For example, drive settling is configured around a 1-inch band for 90 ms and a wider 3-inch band for 250 ms. Chaining thresholds are configured separately: 3 inches for drive, 3 degrees for turns, and 5 degrees for swings.
+The tuning in [`default_constants()`](src/autons.cpp) controls four parts of that response:
 
-Those settings control different parts of the motion: gains shape the response, slew settings constrain initial output, exit conditions determine when a movement is considered finished, and chaining thresholds determine when the next movement can take over.
+| Setting | What we tune it for |
+| --- | --- |
+| Controller gains | Reach the target quickly while limiting overshoot and heading error. |
+| Slew limits | Limit initial motor output during acceleration. |
+| Exit conditions | Decide how close the robot must be to the target, and for how long, before a movement finishes. |
+| Chaining thresholds | Decide when the next movement can begin without waiting for a full stop. |
 
-The controller implementation and odometry machinery come from EZ-Template. Our contribution is the hardware configuration, gain and threshold tuning, motion sequencing, and scoring routines. Competition paths primarily use distance and heading control; the included coordinate-based odometry and path-following routines are library examples. The chassis uses drivetrain sensing and an IMU, with separate tracking-wheel declarations disabled.
+For example, the drive exit conditions include a 1-inch error band held for 90 ms and a wider 3-inch band held for 250 ms. Chaining uses separate thresholds: 3 inches for driving, 3 degrees for turning, and 5 degrees for swing turns. The integral gains are set to zero, so the configured PID controllers use proportional and derivative terms.
+
+EZ-Template provides the controllers and odometry implementation. Our work is the hardware configuration, tuning, motion sequences, and scoring routines. Competition paths primarily use distance and heading control; the coordinate-based path-following routines included here are library examples. The chassis uses drivetrain sensors and an IMU, without separate tracking wheels enabled.
 
 ## Field-relative position correction
 
-Closed-loop convergence to an encoder target does not guarantee the intended field position. Slip, contact, and small heading errors accumulate across a long sequence, shifting later intake and scoring approaches even when individual movements satisfy their exit conditions.
+Reaching an encoder target does not always mean reaching the intended spot on the field. Wheel slip, contact, and small heading errors can accumulate over a long routine and shift later scoring approaches.
 
 Some routines use the forward-facing distance sensor to calculate the next drive target from the robot's current distance to field geometry. For example, the skills routine includes:
 
@@ -55,21 +64,21 @@ Some routines use the forward-facing distance sensor to calculate the next drive
 chassis.pid_drive_set(((frontDistance.get()) * 0.0393701) - 10, DRIVE_SPEED);
 ```
 
-The commanded displacement is `measured range − desired standoff`, with millimeters converted to inches. Here, the 10-inch offset sets the nominal separation from the measured surface. Because the displacement is computed from the current range reading, prior longitudinal error is not simply carried into the next fixed-distance command.
+The calculation is **measured distance − desired gap**. It converts millimeters to inches, then subtracts ten inches to set the intended gap from the surface. The next drive therefore starts from a fresh field measurement, reducing the effect of earlier forward/backward position error.
 
-This is **field-relative correction**: the next movement depends on the physical field, not just on how far the software thinks the robot has already traveled. Other approaches use different offsets for their geometry. The correction depends on the robot facing the intended surface and receiving a useful reading. It changes a drive target; it is not full sensor fusion or a global pose reconstruction.
+This **field-relative correction** re-anchors an approach to the physical field. It requires the sensor to face the intended surface and return a useful reading. It corrects the next drive target rather than reconstructing the robot's full position through sensor fusion.
 
-The included EZ-Template interference example demonstrates a separate recovery pattern. After a movement reports interference, it attempts to back away; repeated interference causes a drivetrain sensor reset before a shorter, slower movement. This shows how a routine can branch on a failed movement instead of continuing as though it reached its target. That example is distinct from the distance-sensor corrections used in the competition routines.
+The included EZ-Template interference example also shows how to recover when movement is obstructed: attempt to back away, then reset drive measurements and retry with a shorter, slower movement if interference continues. This is a library example, separate from the distance corrections in our competition routines.
 
-## Motion scheduling and chaining
+## Motion timing and chaining
 
-The routines coordinate mechanisms against measured motion progress and vary output limits within a segment. This allocates speed to transit while reserving slower, more controlled motion for collection and scoring:
+The robot can move quickly between goals, then slow down for a precise scoring approach. Three controls coordinate that timing:
 
 - `pid_wait_until` waits for a distance or heading milestone before issuing the next action. A mechanism can deploy partway through a drive instead of waiting for the entire movement to finish.
 - `pid_speed_max_set` changes the active movement's speed limit. Longer approaches can start quickly and slow near a goal or intake interaction.
 - `pid_wait_quick_chain` hands off near the target so consecutive movements can blend without waiting for a full settling period each time.
 
-Chaining reduces the time spent settling between compatible movements; full `pid_wait()` calls remain at interactions that need a completed approach. Mechanism delays provide time for object transfer. These are tuned together: shortening a chassis wait is only useful if the intake and scoring sequence can keep up.
+Full `pid_wait()` calls remain where an approach must finish before scoring. Timed delays give game objects time to move through the intake. Motion and mechanism timing are tuned together: a faster drive only helps if the scoring sequence can keep up.
 
 ## Game-object handling
 
@@ -77,17 +86,17 @@ The robot uses top and middle intake motors that can run together or at differen
 
 [`include/subsystems.hpp`](include/subsystems.hpp) groups the motor, optical sensor, forward distance sensor, and pneumatic definitions. Autonomous routines coordinate these mechanisms with drive commands, so intake motors can keep running while the chassis moves toward the next interaction.
 
-The optical-sensing helpers read hue and proximity for object-detection logic. Red and blue sampling routines illuminate the sensor and print measured hue ranges for calibration. These helpers are separate from the forward distance sensor's field-position measurements.
+The optical helpers read color hue and proximity to detect game objects. Calibration routines turn on the sensor light and print red and blue hue samples. The separate forward distance sensor measures the field for approach correction.
 
-The `doIntakeUnstuck` helper checks for low intake velocity despite applied voltage. Its recovery branch uses a brief reverse command after a timed stall condition. A middle-goal routine launches the helper with `pros::Task`, allowing that work to execute separately from the drivetrain sequence. In this snapshot the helper performs one check per invocation, rather than running as a continuous background monitor.
+The `doIntakeUnstuck` helper checks whether the intake is receiving voltage but barely moving. Its recovery branch briefly reverses the intake after a timed stall. A middle-goal routine launches it as a separate `pros::Task`, alongside drive motion. The current helper checks once per invocation; it is not a continuous monitor.
 
 ## Autonomous routines and tuning
 
 The codebase contains variants for left and right starting positions, different scoring priorities, autonomous win-point attempts, parking, middle-goal approaches, match loading, and longer skills sequences. An autonomous win point is an additional match-standing reward for completing specified objectives during the autonomous period.
 
-The routine selected for a match depends on the starting side and the strategy agreed with the drive team and alliance partner. EZ-Template provides the on-brain selector used by `autonomous()`; routines are registered in `initialize()`. The current registration connects the first entry to `finalSkills` and retains the library's test examples. Other competition routines remain in `autons.cpp` for selecting and configuring the desired program.
+The starting side and alliance strategy determine which routine to use. Routines are registered in `initialize()` for EZ-Template's selector on the robot brain. The current selection list includes `finalSkills` and library test examples; other competition variants are kept in `autons.cpp`.
 
-Between runs, the useful feedback is concrete: how far the approach missed, whether a turn overshot, where an intake stalled, and whether the mechanism finished before the next movement. The program includes a controller-triggered distance readout and a background pose display. It also retains EZ-Template's optional PID-tuning and controller-triggered autonomous helpers, whose call is disabled in the current driver loop.
+A controller-triggered distance readout and background position display help diagnose missed approaches and turn errors. The code also retains EZ-Template's optional live PID tuner and controller-triggered autonomous helpers, currently disabled in the driver loop.
 
 That supports a short development cycle: test a segment, adjust its gains, target, speed, or timing, and run it again. Hardware changes also require retuning; the constants are specific to this chassis and its mechanisms.
 
@@ -95,7 +104,7 @@ That supports a short development cycle: test a segment, adjust its gains, targe
 
 Robot Skills is a separate challenge where one robot scores on the field without an opposing alliance. Rankings combine a driver-controlled skills score with an autonomous programming skills score, so both driving and software affect the result.
 
-The skills routines here extend the same motion and mechanism controls into longer sequences: collecting objects, approaching loaders and goals, scoring, repositioning, and parking. With more movements in a run, repeatable approaches and occasional field-relative corrections become especially valuable. The team's season peak is listed above; it is a peak ranking, not a final-season placement.
+Skills routines link collection, loading, scoring, and parking into longer sequences. With more movements per run, repeatable approaches and distance-based corrections become especially valuable. The ranking at the top is the team's season peak, not its final-season placement.
 
 ## Competition performance
 
