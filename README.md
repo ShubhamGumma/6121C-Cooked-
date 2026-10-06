@@ -1,8 +1,8 @@
 # 6121C Competition Code
 
-C++ competition software for VEX Team 6121C's 2025–26 Push Back robot, built on PROS and EZ-Template. The robot uses feedback-controlled motion, distance sensing, and coordinated scoring mechanisms to run autonomous match and skills routines.
+C++ competition software for VEX 6121C's 2025–26 Push Back robot, combining PID autonomous control, sensor-based position correction, and coordinated scoring on PROS and EZ-Template.
 
-**Peak #34 globally in Robot Skills · 20 total competition awards**
+**Peak #35 globally in Robot Skills · 20 total competition awards**
 
 ## Highlights
 
@@ -11,7 +11,7 @@ C++ competition software for VEX Team 6121C's 2025–26 Push Back robot, built o
 - **Field-relative correction:** used a forward distance sensor to re-anchor approaches against known field geometry during longer routines, reducing error accumulated from prior movements.
 - **Motion sequencing:** changed speed during movement, triggered mechanisms at intermediate distance targets, and chained drive/turn segments to carry momentum without waiting for full settling.
 - **Mechanism coordination:** operated dual intake motors and pneumatic scoring/descore systems alongside drivetrain motion, with optical-sensing helpers and a separately scheduled intake-recovery task.
-- **Competition performance:** reached a **peak #34 global Robot Skills ranking** during the 2025–26 season, with **20 total competition awards**, including **5× Tournament Champion** and **8× Robot Skills Champion** finishes, plus Excellence, Finalist, Build, and Think awards. [Full breakdown below.](#competition-performance)
+- **Competition performance:** reached a **peak #35 global Robot Skills ranking** during the 2025–26 season, with **20 total competition awards**, including **5× Tournament Champion** and **8× Robot Skills Champion** finishes, plus Excellence, Finalist, Build, and Think awards. [Full breakdown below.](#competition-performance)
 
 ## Autonomous control
 
