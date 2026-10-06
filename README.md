@@ -2,15 +2,16 @@
 
 C++ competition software for VEX Team 6121C's 2025–26 Push Back robot, built on PROS and EZ-Template. The robot uses feedback-controlled motion, distance sensing, and coordinated scoring mechanisms to run autonomous match and skills routines.
 
-**Peak #35 globally in Robot Skills · 20 total competition awards**
+**Peak #34 globally in Robot Skills · 20 total competition awards**
 
 ## Highlights
 
-- **Motion control:** tuned drive, heading, turn, and swing controllers, including acceleration limits and settling thresholds.
-- **Position correction:** used a forward distance sensor to adjust approaches against known field geometry.
-- **Faster autonomous sequences:** changed speed during motion, triggered mechanisms at measured positions, and chained movements without unnecessary stops.
-- **Mechanism coordination:** controlled separate intake motors and pneumatics, with optical-sensing and intake-recovery helpers.
-- **Competition results:** 5× Tournament Champion and 8× Robot Skills Champion, plus Excellence, Finalist, Build, and Think awards. [Full breakdown below.](#competition-performance)
+- **Closed-loop autonomous control:** tuned separate PID settings for linear drive, heading correction, in-place turns, and swing turns, with motion-specific slew limits and exit/settling conditions. The configuration also includes odometry gains used by the library's motion examples.
+- **Autonomous repeatability:** reset PID targets, IMU heading, drivetrain sensors, and robot pose before each run, then used hold braking to resist unintended movement. Included interference examples demonstrate recovery resets after obstructed motion.
+- **Field-relative correction:** used a forward distance sensor to re-anchor approaches against known field geometry during longer routines, reducing error accumulated from prior movements.
+- **Motion sequencing:** changed speed during movement, triggered mechanisms at intermediate distance targets, and chained drive/turn segments to carry momentum without waiting for full settling.
+- **Mechanism coordination:** operated dual intake motors and pneumatic scoring/descore systems alongside drivetrain motion, with optical-sensing helpers and a separately scheduled intake-recovery task.
+- **Competition performance:** reached a **peak #34 global Robot Skills ranking** during the 2025–26 season, with **20 total competition awards**, including **5× Tournament Champion** and **8× Robot Skills Champion** finishes, plus Excellence, Finalist, Build, and Think awards. [Full breakdown below.](#competition-performance)
 
 ## Autonomous control
 
